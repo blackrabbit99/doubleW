@@ -1,0 +1,33 @@
+<html>
+  <head>
+    <script src = './bundle.js'></script>
+    <script>
+      window.onload = function(){
+        var parallel = new doubleW([1,2,3,4,5,6]);
+
+        // parallel.spawn(function (data) {
+        //   return data.split( "" )
+        //         .reverse()
+        //         .join( "" );
+        // })
+        // .then(function (data) {
+        //   console.log(data)
+        // })
+        // .catch(function(e){
+        //   console.log(e);
+        // });
+
+        parallel.map(function(a){ return a*10; });
+        // .then(function(){
+        //   //debugger;
+        // })
+        // .catch(function(e){
+        //   debugger;
+        // });
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Test page</h1>
+  </body>
+</html>

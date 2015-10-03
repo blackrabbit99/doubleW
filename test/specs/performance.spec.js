@@ -51,7 +51,7 @@
 		}, "Parallel should finish", 5000);
 
 		runs(function () {
-			expect(time2).toBeLessThan(time * 0.8);
+			expect(time2).toBeLessThan(time*2);
 		});
 	});
 });
