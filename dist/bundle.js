@@ -106,21 +106,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	      data = data || this.data;
 	      return new Promise(function (resolve, reject) {
 
-	        if (worker) {
-	          worker.onmessage = function (data) {
-	            worker.terminate();
-	            resolve(typeof index === 'number' ? { data: data.data, index: index } : data.data);
-	          };
+	        worker.onmessage = function (data) {
+	          debugger;
+	          worker.terminate();
+	          resolve(typeof index === 'number' ? { data: data.data, index: index } : data.data);
+	        };
 
-	          worker.onerror = function (e) {
-	            worker.terminate();
-	            reject(e);
-	          };
-	        } else {
-	          var b = 5;
-
-	          //sync flow
-	        }
+	        worker.onerror = function (e) {
+	          worker.terminate();
+	          reject(e);
+	        };
 
 	        worker.postMessage(data);
 	      });
@@ -137,36 +132,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var worker = this._spawnWorker(cb, env);
 	      return this.startWorker(worker, value, index);
 	    }
+	  }, {
+	    key: '_spawnReduce',
+	    value: function _spawnReduce(cb, env, value) {
+	      var worker = this._spawnWorker(cb, env);
+	      return this.startWorker(worker, value);
+	    }
+	  }, {
+	    key: 'reduce',
+	    value: function reduce(cb, env) {
+	      var _this = this;
 
-	    // map(cb, env) {
-	    //   let promiseList = [];
-	    //
-	    //   this.data.forEach((value) => {
-	    //     const promise = this._spawnMap(cb, env, value);
-	    //     promiseList.push(promise);
-	    //   });
-	    //
-	    //   return Promise.all(promiseList);
-	    // }
+	      var data = this.data;
+	      var startStack = data.splice(0, 2);
 
+	      return data.reduce(function (promise, value) {
+	        return promise.then(function (result) {
+	          return _this._spawnReduce(cb, env, [result, value]);
+	        });
+	      }, this._spawnReduce(cb, env, startStack));
+	    }
 	  }, {
 	    key: 'map',
 	    value: function map(cb, env) {
-	      var _this = this;
+	      var _this2 = this;
 
 	      var data = this.data.copyWithin(0, 0);
 	      var startStack = data.splice(0, 2).map(function (value, index) {
-	        return (0, _queuarablePromise2['default'])(_this._spawnMap(cb, env, value, index));
+	        return (0, _queuarablePromise2['default'])(_this2._spawnMap(cb, env, value, index));
 	      });
 	      var res = [];
 
-	      data.reduce(function (promise, value, index) {
+	      return data.reduce(function (promise, value, index) {
 	        return promise.then(function (result) {
 	          res[result.index] = result.data;
 	          startStack = startStack.filter(function (i) {
 	            return !i.isFulfilled();
 	          });
-	          startStack.push((0, _queuarablePromise2['default'])(_this._spawnMap(cb, env, value, index + 2)));
+	          startStack.push((0, _queuarablePromise2['default'])(_this2._spawnMap(cb, env, value, index + 2)));
 	          return data.length - 1 !== index ? Promise.race(startStack) : Promise.all(startStack);
 	        });
 	      }, Promise.race(startStack)).then(function (arr) {

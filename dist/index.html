@@ -17,13 +17,20 @@
         //   console.log(e);
         // });
 
-        parallel.map(function(a){ return a*10; });
-        // .then(function(){
-        //   //debugger;
+        // parallel.map(function(a){ return a*10; })
+        // .then(function(results){
+        //   debugger;
         // })
         // .catch(function(e){
         //   debugger;
         // });
+        parallel.reduce(function(data){
+          //debugger;
+          return data[0] + data[1];
+        }).then(function(value){
+          debugger;
+        });
+
       }
     </script>
   </head>
