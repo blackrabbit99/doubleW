@@ -83,6 +83,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      env: {},
 	      envNamespace: 'env'
 	    };
+	    this.operation = new Promise(function (resolve, reject) {
+	      return resolve();
+	    });
 	    this.data = data;
 	    this.options = Object.assign(defaults, options);
 	    this.requiredScripts = [];
@@ -107,7 +110,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return new Promise(function (resolve, reject) {
 
 	        worker.onmessage = function (data) {
-	          debugger;
 	          worker.terminate();
 	          resolve(typeof index === 'number' ? { data: data.data, index: index } : data.data);
 	        };
@@ -129,6 +131,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: '_spawnMap',
 	    value: function _spawnMap(cb, env, value, index) {
+	      console.count('_spawnMap');
 	      var worker = this._spawnWorker(cb, env);
 	      return this.startWorker(worker, value, index);
 	    }
@@ -157,27 +160,66 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function map(cb, env) {
 	      var _this2 = this;
 
-	      var data = this.data.copyWithin(0, 0);
-	      var startStack = data.splice(0, 2).map(function (value, index) {
-	        return (0, _queuarablePromise2['default'])(_this2._spawnMap(cb, env, value, index));
-	      });
-	      var res = [];
+	      this.operation = this.operation.then(function () {
+	        var data = _this2.data.copyWithin(0, 0);
+	        var startStack = data.splice(0, 2).map(function (value, index) {
+	          return (0, _queuarablePromise2['default'])(_this2._spawnMap(cb, env, value, index));
+	        });
+	        console.log('data', data);
+	        console.log('startStack', startStack);
 
-	      return data.reduce(function (promise, value, index) {
-	        return promise.then(function (result) {
-	          res[result.index] = result.data;
-	          startStack = startStack.filter(function (i) {
-	            return !i.isFulfilled();
+	        return data.reduce(function (promise, value, index) {
+	          return promise.then(function (result) {
+	            _this2.data[result.index] = result.data;
+	            startStack = startStack.filter(function (i) {
+	              return !i.isFulfilled();
+	            });
+	            startStack.push((0, _queuarablePromise2['default'])(_this2._spawnMap(cb, env, value, index + 2)));
+	            return data.length - 1 !== index ? Promise.race(startStack) : Promise.all(startStack);
 	          });
-	          startStack.push((0, _queuarablePromise2['default'])(_this2._spawnMap(cb, env, value, index + 2)));
-	          return data.length - 1 !== index ? Promise.race(startStack) : Promise.all(startStack);
+	        }, Promise.race(startStack)).then(function (arr) {
+	          console.log('arr', arr);
+	          return arr.forEach(function (result) {
+	            _this2.data[result.index] = result.data;
+	          });
 	        });
-	      }, Promise.race(startStack)).then(function (arr) {
-	        arr.forEach(function (result) {
-	          res[result.index] = result.data;
-	        });
-	        return res;
 	      });
+
+	      return this;
+	    }
+	  }, {
+	    key: 'require',
+	    value: function require() {
+	      var args = Array.prototype.slice.call(arguments, 0);
+	      var func;
+
+	      for (var i = 0; i < args.length; i++) {
+	        func = args[i];
+
+	        if (typeof func === 'string') {
+	          this.requiredScripts.push(func);
+	        } else if (typeof func === 'function') {
+	          this.requiredFunctions.push({ fn: func });
+	        } else if (typeof func === 'object') {
+	          this.requiredFunctions.push(func);
+	        }
+	      }
+
+	      return this;
+	    }
+	  }, {
+	    key: 'then',
+	    value: function then(cb, errCb) {
+	      var _this3 = this;
+
+	      this.operation.then(function (result) {
+	        console.log('then.data', _this3.data);
+	        cb(_this3.data);
+	      })['catch'](function (e) {
+	        errCb(e);
+	      });
+
+	      return this;
 	    }
 	  }], [{
 	    key: 'isSupported',

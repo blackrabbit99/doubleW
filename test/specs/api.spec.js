@@ -1,6 +1,6 @@
 ﻿describe('API', function() {
   var isNode = typeof module !== 'undefined' && module.exports;
-  var Parallel = isNode ? require('../../lib/parallel.js') : self.Parallel;
+  var Parallel = isNode ? require('../../lib/parallel.js') : (self.Parallel || self.doubleW);
 
   it('should be a constructor', function() {
     expect(Parallel).toEqual(jasmine.any(Function));
@@ -100,6 +100,7 @@
       p.map(function(el) {
         return el + 1;
       }).then(function(data) {
+        debugger;
         result = data;
         done = true;
       });
